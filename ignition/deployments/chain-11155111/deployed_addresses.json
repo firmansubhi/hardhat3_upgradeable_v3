@@ -1,0 +1,10 @@
+{
+  "ProxyDorz#Dorz": "0xDBDEfeB0efaDb48EDc65868B1953aA775eBEb434",
+  "ProxyDorz#TransparentUpgradeableProxy": "0xCB09BB42A4Def3420e3AeC8a55eedD1C24036AA9",
+  "ProxyDorz#ProxyAdmin": "0x8B589C46eA1AF369f0EeD64A426f55AC56fce164",
+  "DorzModule#Dorz": "0xCB09BB42A4Def3420e3AeC8a55eedD1C24036AA9",
+  "ProxyVesting#Vesting": "0x495E07932cABbdc1CAAFb574349b2fa8d9cF0D6D",
+  "ProxyVesting#TransparentUpgradeableProxy": "0x8615da8C1165FbC0Fc22a34a7933A76329a4D4D6",
+  "ProxyVesting#ProxyAdmin": "0x5861A37AAe34588131276aD76CD497Ee835DEC97",
+  "VestingModule#Vesting": "0x8615da8C1165FbC0Fc22a34a7933A76329a4D4D6"
+}
