@@ -12,10 +12,10 @@ error InsufficientOwnerBalance(uint256 balance);
 error FailedWithdraw();
 error InvalidEthQty();
 error InvalidUsdQty();
-error IvalidVestingAmount();
-error IvalidOrderNumber();
+error InvalidVestingAmount();
+error InvalidOrderNumber();
 error OrderNumberIsUsed();
-error IvalidAccount();
+error InvalidAccount();
 error UnauthorizedAccount();
 error VestingAlreadyClaimed();
 error InvalidWithdrawalTime(uint256 allowedTime);
@@ -80,13 +80,11 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      */
     function withdraw() public onlyOwner {
         uint256 ownerBalance = address(this).balance;
-        //require(ownerBalance > 0, "You have insufficient balance");
         if (ownerBalance < 1) {
             revert InsufficientOwnerBalance(ownerBalance);
         }
 
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
-        //require(sent, "Unable to withdraw");
         if (!sent) {
             revert FailedWithdraw();
         }
@@ -129,11 +127,11 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      */
     function getPriceUSDperETH() public view returns (int256) {
         //uncomment to return real price from aggregator
-        (, int256 answer, , , ) = dataFeed.latestRoundData();
-        return answer;
+        //(, int256 answer, , , ) = dataFeed.latestRoundData();
+        //return answer;
 
         //return mock up data
-        //return usdEthPrice;
+        return usdEthPrice;
     }
 
     /**
@@ -151,7 +149,6 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @notice return USD value and APR in USD from ETH to be paid
      */
     function getUSDAmount(int256 ethQty) public view returns (int256, int256) {
-        //require(ethQty > 0, "Vesting amount has to be greater than $0");
         if (ethQty < 1) {
             revert InvalidEthQty();
         }
@@ -174,7 +171,6 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @notice return ETH value and APR in USD from USD to be paid
      */
     function getETHAmount(int256 usdQty) public view returns (int256, int256) {
-        //require(usdQty > 0, "Vesting amount has to be greater than $0");
         if (usdQty < 1) {
             revert InvalidUsdQty();
         }
@@ -204,17 +200,15 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function createVest(
         uint256 orderNumber
     ) public payable returns (int256, int256, uint256) {
-        //require(msg.value > 0, "Vesting amount has to be greater than $0");
         if (msg.value < 1) {
-            revert IvalidVestingAmount();
+            revert InvalidVestingAmount();
         }
-        //require(orderNumber > 0, "This ID is not valid");
+
         if (orderNumber < 1) {
-            revert IvalidOrderNumber();
+            revert InvalidOrderNumber();
         }
 
         bool isExist = checkVestOrderExist(orderNumber);
-        //require(!isExist, "This ID has been used");
         if (isExist) {
             revert OrderNumberIsUsed();
         }
@@ -282,9 +276,8 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 orderNumber
     ) public view returns (int256, int256, uint256, uint256, uint256, bool) {
         (bool isExist, uint256 dataID) = getVestDataID(orderNumber);
-        //require(isExist, "Your account is not valid");
         if (!isExist) {
-            revert IvalidAccount();
+            revert InvalidAccount();
         }
 
         return (
@@ -299,20 +292,14 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function claimVest(uint256 orderNumber) public payable returns (uint256) {
         (bool isExist, uint256 id) = getVestDataID(orderNumber);
-        //require(isExist, "Your account is not valid");
         if (!isExist) {
             revert UnauthorizedAccount();
         }
 
-        //require(!VestingData[id].claimStatus, "Withdraw had been made");
         if (VestingData[id].claimStatus) {
             revert VestingAlreadyClaimed();
         }
 
-        //require(
-        //    (VestingData[id].lockUpTime <= block.timestamp),
-        //    "Withdrawal period is not valid"
-        //);
         if (VestingData[id].lockUpTime > block.timestamp) {
             revert InvalidWithdrawalTime(VestingData[id].lockUpTime);
         }
@@ -321,13 +308,11 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 qty = getCoinQtyByUSD(total);
 
         uint256 vestingBalance = myToken.balanceOf(address(this));
-        //require((vestingBalance >= qty), "Insufficient supply");
         if (vestingBalance < qty) {
             revert InsufficientSupply(vestingBalance);
         }
 
         bool sent = myToken.transfer(msg.sender, qty);
-        //require(sent, "System error, please try again later");
         if (!sent) {
             revert TransferFailed();
         }

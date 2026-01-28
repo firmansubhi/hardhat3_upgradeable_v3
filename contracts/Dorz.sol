@@ -12,16 +12,81 @@ contract Dorz is
     OwnableUpgradeable,
     UUPSUpgradeable
 {
+    // 1 billion tokens
+    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10 ** 18;
+
+    //decimal value of percentage
+    uint256 public constant PERCENTAGE_DECIMAL = 10 ** 2;
+
+    // Custom Errors for Clarity
+    error InvalidAllocationAddress(string label);
+    error PercentageSumExceeds100();
+    error TotalSupplyMismatch();
+
+    // Custom Event for Distribution Transparency
+    event TokensAllocated(
+        address indexed recipient,
+        string label,
+        uint256 amount
+    );
+
+    // Using a struct for better readability of the allocation logic
+    struct Allocation {
+        address wallet;
+        uint256 percentage;
+        string label;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize(
+        address initialOwner,
+        address vestingWallet,
+        address teamWallet
+    ) public initializer {
         __ERC20_init("DORZ", "DORZ");
-        __Ownable_init(msg.sender);
+        __Ownable_init(initialOwner);
 
-        _mint(msg.sender, 1000_000_000 * 10 ** decimals());
+        Allocation[3] memory allocations = [
+            Allocation(initialOwner, 15, "Owner"),
+            Allocation(vestingWallet, 50, "Vesting"),
+            Allocation(teamWallet, 35, "Team")
+        ];
+
+        uint256 totalPercentage = 0;
+
+        for (uint256 i = 0; i < allocations.length; i++) {
+            Allocation memory current = allocations[i];
+
+            if (current.wallet == address(0)) {
+                revert InvalidAllocationAddress(current.label);
+            }
+
+            totalPercentage += current.percentage;
+            uint256 amount = (MAX_SUPPLY * current.percentage) /
+                PERCENTAGE_DECIMAL;
+
+            _mint(current.wallet, amount);
+            emit TokensAllocated(current.wallet, current.label, amount);
+        }
+
+        if (totalPercentage > 100) {
+            revert PercentageSumExceeds100();
+        }
+
+        uint256 mintedSoFar = totalSupply();
+        if (mintedSoFar < MAX_SUPPLY) {
+            uint256 remaining = MAX_SUPPLY - mintedSoFar;
+            _mint(initialOwner, remaining);
+            emit TokensAllocated(initialOwner, "Owner Treasury", remaining);
+        }
+
+        if (totalSupply() != MAX_SUPPLY) {
+            revert TotalSupplyMismatch();
+        }
     }
 
     function _authorizeUpgrade(

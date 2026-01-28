@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 
 const proxyVesting = buildModule("ProxyVesting", (m) => {
-  const proxyAdminOwner = m.getAccount(0);
+  const proxyAdminOwner = m.getAccount(1);
 
   const vesting = m.contract("Vesting");
 
@@ -34,7 +34,7 @@ const vestingModule =  buildModule("VestingModule", (m) => {
   //mainnet
   //0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
 
-  const dorzProxy = "0xCB09BB42A4Def3420e3AeC8a55eedD1C24036AA9";
+  const dorzProxy = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
   const EthtoUsd = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
   const MyCoinperUSD = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
 

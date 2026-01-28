@@ -4,7 +4,7 @@ import vestingModule from "./proxyVesting.js";
 
 
 const upgradeVesting = buildModule("ProxyVesting2", (m) => {
-  const proxyAdminOwner = m.getAccount(0);
+  const proxyAdminOwner = m.getAccount(1);
 
   const { proxyVest, proxyAdminVest } = m.useModule(vestingModule);
 
