@@ -19,7 +19,7 @@ error InvalidAccount();
 error UnauthorizedAccount();
 error VestingAlreadyClaimed();
 error InvalidWithdrawalTime(uint256 allowedTime);
-error InsufficientSupply(uint256 vestingBalance);
+error InsufficientSupply(uint256 vestingAllowance);
 error TransferFailed();
 
 contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
@@ -27,6 +27,8 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     AggregatorV3Interface internal dataFeed;
     AggregatorV3Interface internal dataFeedMyCoin;
+
+    address public vestingOwner;
 
     //price simulation for USD & ETH for testing
     int256 public usdEthPrice;
@@ -51,12 +53,14 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     function initialize(
+        address vestingWallet,
         address dorzProxy,
         address EthtoUsd,
         address MyCoinperUSD
     ) public initializer {
-        __Ownable_init(msg.sender);
+        __Ownable_init(vestingWallet);
 
+        vestingOwner = vestingWallet;
         usdEthPrice = 1000 * PRICE_FEED_DECIMAL; // 1 eth = 1000 usd
         myCoinUsdPrice = 100 * PRICE_FEED_DECIMAL; // 1 usd = 100 dorz
         APR_RATE = 20 * PERCENTAGE_DECIMAL;
@@ -307,12 +311,15 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         int256 total = VestingData[id].amount + VestingData[id].aprAmount;
         uint256 qty = getCoinQtyByUSD(total);
 
-        uint256 vestingBalance = myToken.balanceOf(address(this));
-        if (vestingBalance < qty) {
-            revert InsufficientSupply(vestingBalance);
+        uint256 vestingAllowance = myToken.allowance(
+            vestingOwner,
+            address(this)
+        );
+        if (vestingAllowance < qty) {
+            revert InsufficientSupply(vestingAllowance);
         }
 
-        bool sent = myToken.transfer(msg.sender, qty);
+        bool sent = myToken.transferFrom(vestingOwner, msg.sender, qty);
         if (!sent) {
             revert TransferFailed();
         }

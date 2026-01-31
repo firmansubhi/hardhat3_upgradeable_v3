@@ -11,11 +11,11 @@ async function main() {
 	const [deployer] = await ethers.getSigners();
 
 
-	const contractAddress = "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e";
+	const contractAddress = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed";
 	const vest = await ethers.getContractAt("Vesting", contractAddress);
 
 
-	const decodedError = vest.interface.parseError("0x08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000009676167616c206e69680000000000000000000000000000000000000000000000");
+	const decodedError = vest.interface.parseError("0x28459a660000000000000000000000000000000000000000000000000000000000000000");
 
 
 	console.log(decodedError);
