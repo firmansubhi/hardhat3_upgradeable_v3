@@ -18,7 +18,9 @@ error OrderNumberIsUsed();
 error InvalidAccount();
 error UnauthorizedAccount();
 error VestingAlreadyClaimed();
+error DeveloperCoinAlreadyClaimed();
 error InvalidWithdrawalTime(uint256 allowedTime);
+error InvalidDeveloperWithdrawalTime(uint256 allowedTime);
 error InsufficientSupply(uint256 vestingAllowance);
 error TransferFailed();
 
@@ -29,6 +31,11 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     AggregatorV3Interface internal dataFeedMyCoin;
 
     address public vestingOwner;
+    address public teamAddress;
+
+	//developer Lockups time
+	uint256 public developerLockupEnd;
+	bool public developerLockupClaimed;
 
     //price simulation for USD & ETH for testing
     int256 public usdEthPrice;
@@ -54,6 +61,7 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function initialize(
         address vestingWallet,
+		address teamWallet,
         address dorzProxy,
         address EthtoUsd,
         address MyCoinperUSD
@@ -61,6 +69,7 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         __Ownable_init(vestingWallet);
 
         vestingOwner = vestingWallet;
+        teamAddress = teamWallet;
         usdEthPrice = 1000 * PRICE_FEED_DECIMAL; // 1 eth = 1000 usd
         myCoinUsdPrice = 100 * PRICE_FEED_DECIMAL; // 1 usd = 100 dorz
         APR_RATE = 20 * PERCENTAGE_DECIMAL;
@@ -73,6 +82,10 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         dataFeedMyCoin = AggregatorV3Interface(MyCoinperUSD);
 
         myToken = Dorz(dorzProxy);
+
+		//developer’s and team’s coins will be on lockup for the duration of 12 months.
+		developerLockupEnd = block.timestamp -1 days;//+ 365 days;
+		developerLockupClaimed = false;
     }
 
     function _authorizeUpgrade(
@@ -167,7 +180,7 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function getCoinQtyByUSD(int256 total) public view returns (uint256) {
         int256 myCoinPrice = getPriceMyCoinperUSD();
-        int256 coinQty = (total * myCoinPrice) / 1e8;
+        int256 coinQty = (total * myCoinPrice) / PRICE_FEED_DECIMAL;
         return uint256(coinQty);
     }
 
@@ -200,6 +213,14 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         int256 amountOfUSD,
         int256 amountOfAPR
     );
+
+	event ClaimDeveloperLockups(
+        address sender,
+        uint256 coinQty,
+        uint256 claimAt
+    );
+
+	
 
     function createVest(
         uint256 orderNumber
@@ -345,5 +366,41 @@ contract Vesting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         return myUsd;
         //return (myBalance, myUsd);
+    }
+
+	function claimDeveloperLockups() public returns (uint256) {
+
+        if (developerLockupClaimed) {
+            revert DeveloperCoinAlreadyClaimed();
+        }
+
+        if (developerLockupEnd > block.timestamp) {
+            revert InvalidDeveloperWithdrawalTime(developerLockupEnd);
+        }
+
+        uint256 qty = 50_000_000 * 10 ** 18;
+
+        uint256 vestingAllowance = myToken.allowance(
+            vestingOwner,
+            address(this)
+        );
+        if (vestingAllowance < qty) {
+            revert InsufficientSupply(vestingAllowance);
+        }
+
+        bool sent = myToken.transferFrom(vestingOwner, teamAddress, qty);
+        if (!sent) {
+            revert TransferFailed();
+        }
+
+        developerLockupClaimed = true;
+
+        emit ClaimDeveloperLockups(
+            msg.sender,
+            qty,
+            block.timestamp
+        );
+
+        return qty;
     }
 }

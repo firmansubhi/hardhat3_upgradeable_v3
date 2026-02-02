@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-contract Dorz is
+contract Dorz2 is
     Initializable,
     ERC20Upgradeable,
     OwnableUpgradeable,
@@ -92,4 +92,9 @@ contract Dorz is
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyOwner {}
+
+	function testUpgrade(address initialOwner) public {
+        
+		_mint(initialOwner, 123_000_000 * 10 ** decimals());
+    }
 }

@@ -36,11 +36,12 @@ const vestingModule =	buildModule("VestingModule", (m) => {
 
 	const dorzProxy = "0x59b670e9fA9D0A427751Af201D676719a970857b";
 	const vestingWallet = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8";
+	const teamWallet = "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc";
 	const EthtoUsd = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
 	const MyCoinperUSD = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
 
 
-	m.call(vesting, "initialize", [vestingWallet, dorzProxy, EthtoUsd, MyCoinperUSD]);
+	m.call(vesting, "initialize", [vestingWallet, teamWallet, dorzProxy, EthtoUsd, MyCoinperUSD]);
 
 	return { implementation, vesting, proxyVest, proxyAdminVest };
 });
